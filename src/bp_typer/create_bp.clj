@@ -1,33 +1,26 @@
 (ns bp-typer.create-bp
-  (:require [bp-typer.encoder :refer [bp-encode]]
-            [jsonista.core :as j]
-            [clojure.string :as string]
-            [clojure.java.io :as io]
-            [clojure.set :as set])
+  (:require [clojure.java.io :as io]
+            [clojure.set :as set]
+            [clojure.string :as string])
   (:import (java.util HexFormat)))
 
-(defn- create-array-of-tiles [vec-2d tile-name]
-  (mapv (fn [[x y]]
-          {:name tile-name
-           :position {:x x :y y}})
-        vec-2d))
+(defn- bp-data-from-tile-array [tile-array {:keys [bp-label]}]
+  {:blueprint
+   {:item "blueprint"
+    :icons [{:index 1, :signal {:name "signal-A", :type "virtual"}}
+            {:index 2, :signal {:name "signal-B", :type "virtual"}}
+            {:index 3, :signal {:name "signal-C", :type "virtual"}}
+            {:index 4, :signal {:name "signal-D", :type "virtual"}}]
+    :label bp-label
+    :tiles tile-array
+    :version 281479274299391}})
 
-(defn- bp-from-tile-array [tile-array]
-  (bp-encode
-   (j/write-value-as-string
-    {:blueprint
-     {:item "blueprint",
-      :icons [{:index 1, :signal {:name "refined-concrete", :type "item"}}],
-      :label "Blueprint",
-      :tiles tile-array
-      :version 281479274299391}})))
-
-(defn- hex-to-2d-vec [hex-string width]
-  (let [op (cond
-             (= width 32) {:format-str "%8s"
-                           :partition 2}
-             (= width 64) {:format-str "%16s"
-                           :partition 4})]
+(defn- hex-to-pixel-vec-2d [hex-string width]
+  (let [op (condp = width
+             8 {:format-str "%8s"
+                :partition 2}
+             16 {:format-str "%16s"
+                 :partition 4})]
     (mapv (fn [x]
             (mapv (fn [y]
                     (Integer/parseInt (str y)))
@@ -40,22 +33,49 @@
                  " " "0")
                (partition (:partition op) (seq hex-string))))))
 
-(defn- hex-to-tile-array [{:keys [hex-code width char-num]} tile-name]
-  (create-array-of-tiles
-   (mapv (fn [m]
-           (let [coordinate (dissoc m :value)
-                 x (:x coordinate)
-                 y (:y coordinate)]
-             [x y]))
-         (filter #(= 1 (:value %))
-                 (map (fn [m] (update m :x #(+ (* (/ width 4) char-num) %)))
-                      (flatten
-                       (keep-indexed
-                        (fn [index value] (map #(assoc % :y index) value))
-                        (map (fn [vec-entry] (keep-indexed
-                                              (fn [index value] {:x index :value value}) vec-entry))
-                             (hex-to-2d-vec hex-code width)))))))
-   tile-name))
+(defn extract-coordinate [m]
+  (let [coordinate (dissoc m :value)
+        x (:x coordinate)
+        y (:y coordinate)]
+    [x y]))
+
+(defn pixel-vec-2d-to-coordinates
+  [vec-2d x-offset y-offset]
+  (mapv extract-coordinate
+        (filter #(= 1 (:value %))
+                (flatten
+                 (keep-indexed
+                  (fn [index value]
+                    (map #(assoc % :y (+ @y-offset index))
+                         value))
+                  (map (fn add-x-to-each-column [column]
+                         (keep-indexed
+                          (fn [index value]
+                            {:x (+ index @x-offset) :value value})
+                          column))
+                       vec-2d))))))
+
+(defn- coordinates-to-tiles [pixel-vec-2d tile-name]
+  (mapv (fn [[x y]]
+          {:name tile-name
+           :position {:x x :y y}})
+        pixel-vec-2d))
+
+(defn- hex-to-tile-array [{:keys [hex-code width char]} tile-name x-offset y-offset]
+  (condp = char
+    \newline (do (reset! x-offset 0)
+                 (swap! y-offset #(+ 17 %))
+                 nil)
+    \space (do (swap! x-offset #(+ 8 %))
+               nil)
+    \tab (do (swap! x-offset #(+ (* 8 4) %))
+             nil)
+    (let [tiles (-> hex-code
+                    (hex-to-pixel-vec-2d width)
+                    (pixel-vec-2d-to-coordinates x-offset y-offset)
+                    (coordinates-to-tiles tile-name))]
+      (swap! x-offset #(+ % width))
+      tiles)))
 
 (def ^:private unifont-data
   (set (map (fn [s]
@@ -65,42 +85,42 @@
             (string/split (slurp (io/resource "unifont_jp-14.0.03.hex"))
                           #"\n"))))
 
-(defn- grab-data-by-codepoint [idx cp]
-  (let [data (:val (#(when (= 1 (count %))
-                       (first %))
-                    (set/select #(= cp (:id %)) unifont-data)))
-        idx (if idx idx 0)]
-    {:hex-code data
-     :char-num idx
-     :width (count data)}))
+(defn- select-font-data-by-codepoint
+  [cp]
+  (set/select #(= cp (:id %)) unifont-data))
 
-(defn- list-of-hex-data [list-of-ints]
-  (keep-indexed grab-data-by-codepoint list-of-ints))
+(def hex-lookup-errormsg
+  "For some reason there were multiple matches on the same hex value. Very strange indeed.")
 
-(defn- char-to-int [char]
+(defn- codepoint-to-hex [{:keys [cp char]}]
+  (let [bits (:val ((fn [s]
+                      (assert (= 1 (count s)) hex-lookup-errormsg)
+                      (first s))
+                    (select-font-data-by-codepoint cp)))]
+    {:hex-code bits
+     :char char
+     :width (/ (count bits)
+               4)}))
+
+(defn- char-to-codepoint [char]
   (assert (= java.lang.Character (type char)))
-  (int char))
+  {:cp (int char)
+   :char char})
 
-(fn grab-data-by-codepoint [idx cp]
-  (let [data (:val (#(when (= 1 (count %))
-                       (first %))
-                    (set/select #(= cp (:id %)) unifont-data)))
-        idx (if idx idx 0)]
-    {:hex-code data
-     :char-num idx
-     :width (count data)}))
+(defn- string-to-codepoints [string]
+  (map char-to-codepoint string))
 
-(defn- string-to-ints [string]
-  (map char-to-int string))
-
-(defn string-to-bp [string & {:keys [tile-name]}]
-  (when-not tile-name
-    "refined-concrete")
-  (bp-from-tile-array
-   (apply concat
-          (map
-           #(hex-to-tile-array
-             % tile-name)
-           (keep-indexed
-            grab-data-by-codepoint
-            (string-to-ints string))))))
+(defn string-to-bp [string & opts]
+  (let [tile-name (or (:tile-name opts)
+                      "stone-path")]
+    (bp-data-from-tile-array
+     (apply concat
+            (let [current-x-offset (atom 0)
+                  current-y-offset (atom 0)]
+              (map (fn [hex-val] (hex-to-tile-array hex-val
+                                                    tile-name
+                                                    current-x-offset
+                                                    current-y-offset))
+                   (map codepoint-to-hex
+                        (string-to-codepoints string)))))
+     {:bp-label string})))
