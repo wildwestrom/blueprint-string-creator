@@ -1,6 +1,5 @@
 ** License
-The source code for everything except the compiled fonts in this current
-release is licensed as follows:
+The source code for everything except the compiled fonts in this current release is licensed as follows:
 
 #+begin_preformatted
      License for this current distribution of program source
@@ -12,9 +11,7 @@ release is licensed as follows:
      version 3.
 #+end_preformatted
 
-The license for the compiled fonts is covered by the SIL Open Font License
-version 1.1 and by the above GPL terms with the GNU font embedding exception,
-as follows:
+The license for the compiled fonts is covered by the SIL Open Font License version 1.1 and by the above GPL terms with the GNU font embedding exception, as follows:
 
 #+begin_preformatted
      As a special exception, if you create a document which uses this font,
@@ -28,8 +25,7 @@ as follows:
      from your version.
 #+end_preformatted
 
-See "http://www.gnu.org/licenses/gpl-faq.html#FontException" and
-"https://scripts.sil.org/OFL" for more details.
+See "http://www.gnu.org/licenses/gpl-faq.html#FontException" and "https://scripts.sil.org/OFL" for more details.
 
 *** GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
