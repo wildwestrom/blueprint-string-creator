@@ -4,7 +4,7 @@
             [org.corfield.build :as bb]))
 
 (def lib 'wildwestrom/bp-typer)
-(def version (format "0.0.%s-alpha" (b/git-count-revs nil)))
+(def version (format "0.1.%s-alpha" (b/git-count-revs nil)))
 
 (defn ci [opts]
   (-> opts

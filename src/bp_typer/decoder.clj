@@ -1,5 +1,6 @@
 (ns bp-typer.decoder
-  (:require [clojure.java.io :as io])
+  (:require [clojure.java.io :as io]
+            [jsonista.core :as j])
   (:import (java.util Base64)
            (java.util.zip InflaterInputStream)))
 
@@ -25,9 +26,7 @@
       zlib-decode
       String.))
 
-(comment
-  (require '[jsonista.core :as j])
-  (def test-bp-string "0eJxdjsEOgjAQRP9lzuUAkmB79DeMh4Ib3Vjahi5GQvrvUkyM8bSZndm3s6J3M8WJvcCs4CH4BHNekfjmrSs7WSLBgIVGKHg7FpUkeKr6iYcHsgL7K71g6nxREHb0YcSQWDj4QtncqlZYysh/mGjljnK6/zA/lRSeNKUd0RzrttNN1zZaH/SGcranrSBO33TOb/dbQ0c=")
-  (-> test-bp-string
+(defn bp-to-map [bp-str]
+  (-> bp-str
       bp-decode
       (j/read-value j/keyword-keys-object-mapper)))

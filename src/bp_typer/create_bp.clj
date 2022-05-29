@@ -110,9 +110,8 @@
 (defn- string-to-codepoints [string]
   (map char-to-codepoint string))
 
-(defn string-to-bp [string & opts]
-  (let [tile-name (or (:tile-name opts)
-                      "stone-path")]
+(defn string-to-bp [opts]
+  (let [{:keys [tile-name text]} opts]
     (bp-data-from-tile-array
      (apply concat
             (let [current-x-offset (atom 0)
@@ -122,5 +121,5 @@
                                                     current-x-offset
                                                     current-y-offset))
                    (map codepoint-to-hex
-                        (string-to-codepoints string)))))
-     {:bp-label string})))
+                        (string-to-codepoints text)))))
+     {:bp-label text})))
