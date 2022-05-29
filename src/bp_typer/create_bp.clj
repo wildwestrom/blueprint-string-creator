@@ -12,7 +12,7 @@
             {:index 3, :signal {:name "signal-C", :type "virtual"}}
             {:index 4, :signal {:name "signal-D", :type "virtual"}}]
     :label bp-label
-    :tiles tile-array
+    :tiles (vec tile-array)
     :version 281479274299391}})
 
 (defn- hex-to-pixel-vec-2d [hex-string width]
@@ -61,14 +61,14 @@
            :position {:x x :y y}})
         pixel-vec-2d))
 
-(defn- hex-to-tile-array [{:keys [hex-code width char]} tile-name x-offset y-offset]
+(defn- hex-to-tile-array [{:keys [hex-code width char]} tile-name x-offset y-offset tab-width]
   (condp = char
     \newline (do (reset! x-offset 0)
                  (swap! y-offset #(+ 17 %))
                  nil)
     \space (do (swap! x-offset #(+ 8 %))
                nil)
-    \tab (do (swap! x-offset #(+ (* 8 4) %))
+    \tab (do (swap! x-offset #(+ (* 8 (tab-width)) %))
              nil)
     (let [tiles (-> hex-code
                     (hex-to-pixel-vec-2d width)
@@ -111,7 +111,7 @@
   (map char-to-codepoint string))
 
 (defn string-to-bp [opts]
-  (let [{:keys [tile-name text]} opts]
+  (let [{:keys [tile-name text tab-width]} opts]
     (bp-data-from-tile-array
      (apply concat
             (let [current-x-offset (atom 0)
@@ -119,7 +119,8 @@
               (map (fn [hex-val] (hex-to-tile-array hex-val
                                                     tile-name
                                                     current-x-offset
-                                                    current-y-offset))
+                                                    current-y-offset
+                                                    tab-width))
                    (map codepoint-to-hex
                         (string-to-codepoints text)))))
      {:bp-label text})))

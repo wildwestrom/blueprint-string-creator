@@ -1,6 +1,6 @@
 * Blueprint String Creator (name subject to change)
 Use this command line tool to turn any text string into a Factorio blueprint!
-Supports ~\n~ and ~\t~ as escape characters.
+Supports newlines and tabs.
 
 ** Building from source
 Make sure you can use ~clojure -T~ then run.
