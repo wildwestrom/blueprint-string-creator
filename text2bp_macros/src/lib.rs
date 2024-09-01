@@ -3,8 +3,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, Ident, Lit, LitStr, NestedMeta};
 
-#[proc_macro]
-pub fn create_tile_enum(input: TokenStream) -> TokenStream {
+fn create_enum(input: TokenStream, enum_identifier: Ident) -> TokenStream {
     let nestedmeta = parse_macro_input!(input as syn::AttributeArgs);
 
     let string_variants: Vec<LitStr> = nestedmeta
@@ -29,11 +28,11 @@ pub fn create_tile_enum(input: TokenStream) -> TokenStream {
 
     let enum_def = quote! {
         #[derive(Debug, Clone, ValueEnum)]
-        enum Tile {
+        enum #enum_identifier {
             #(#variants),*
         }
 
-        impl ToString for Tile {
+        impl ToString for #enum_identifier {
             fn to_string(&self) -> String {
                 match *self {
                     #(Self::#variants => #string_variants.to_owned()),*
@@ -43,4 +42,9 @@ pub fn create_tile_enum(input: TokenStream) -> TokenStream {
     };
 
     enum_def.into()
+}
+
+#[proc_macro]
+pub fn create_tile_enum(input: TokenStream) -> TokenStream {
+    create_enum(input, Ident::new("Tile", proc_macro2::Span::call_site()))
 }
