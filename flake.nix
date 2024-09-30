@@ -1,5 +1,5 @@
 {
-  description = "Rust example flake for Zero to Nix";
+  description = "Flake for factorio blueprint string creator";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs";
