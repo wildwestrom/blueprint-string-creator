@@ -27,6 +27,12 @@ Options:
   -V, --version                  Print version
 ```
 
+You can then copy the blueprint and paste it into Factorio.
+
+## Future plans
+
+I'd really like to format the list of possible tile names more nicely, but I don't know if clap will let me do that.
+
 ## License
 This program uses a compiled version of GNU Unifont for text rendering. GNU Unifont is licensed under the SIL Open Font License version 1.1. See <https://scripts.sil.org/OFL>
 

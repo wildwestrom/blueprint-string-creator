@@ -29,12 +29,12 @@ struct Cli {
     /// Name of the tile you want to write with.
     #[clap(short, long, value_enum, default_value_t = Tile::StonePath)]
     tile_name: Tile,
-    /// How many pixels of space between each line break.
+    /// Number of pixels of space between each line break.
     #[clap(short, long, default_value_t = 1)]
     line_break: u8,
     /// Width of each tab by number of spaces.
     #[clap(long, default_value_t = 1)]
-    tab_width: u8,
+    tab_width: u16,
     text: String,
 }
 
@@ -58,7 +58,12 @@ fn main() {
 
     let mut buffer = Buffer::new(&mut font_system, metrics);
 
+    // This one got merged not too long ago.
+    // https://github.com/pop-os/cosmic-text/pull/306
+    // Switch to the next stable version once it's released.
     let mut buffer = buffer.borrow_with(&mut font_system);
+
+    buffer.set_tab_width(args.tab_width);
 
     let width = f32::MAX;
     buffer.set_size(Some(width), None);
@@ -90,7 +95,7 @@ fn main() {
             ],
             "label": args.text,
             "tiles": [],
-            "version": 281479274299391_u64 /*WTF is this shit?*/,
+            "version": 281479274299391_u64 /*Should I just keep it this?, Should I parameterize this?*/,
         }
     });
 
