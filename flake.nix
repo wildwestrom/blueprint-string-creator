@@ -2,7 +2,7 @@
   description = "Flake for factorio blueprint string creator";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     rust-overlay.url = "github:oxalica/rust-overlay";
     devenv.url = "github:cachix/devenv";
     systems.url = "github:nix-systems/default";

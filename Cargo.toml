@@ -1,12 +1,12 @@
 [package]
 name = "txt2bp"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 base64 = "0.22.1"
 clap = { version = "4", features = ["derive"] }
-colored = "2"
+colored = "3"
 # cosmic-text = "0.12.1"
 cosmic-text = { git = "https://github.com/pop-os/cosmic-text.git" }
 flate2 = "1.0.33"
